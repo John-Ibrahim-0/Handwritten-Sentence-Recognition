@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 
-from dataset import HandwrittenSentenceDataset
+from dataset import HandwrittenSentenceDataset, collate_fn
 from configs import Configs
 
 from utils.visualization import show_before_after
@@ -115,9 +115,9 @@ print("| Datasets ceated.")
 
 print("\nCreating dataloaders:")
 
-train_loader = DataLoader(train_dataset, batch_size=configs.BATCH_SIZE, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=configs.BATCH_SIZE, shuffle=False)
-test_loader = DataLoader(test_dataset, batch_size=configs.BATCH_SIZE, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=configs.BATCH_SIZE, shuffle=True, collate_fn=collate_fn)
+val_loader = DataLoader(val_dataset, batch_size=configs.BATCH_SIZE, shuffle=False, collate_fn=collate_fn)
+test_loader = DataLoader(test_dataset, batch_size=configs.BATCH_SIZE, shuffle=False, collate_fn=collate_fn)
 
 print(f"| Training dataloader: {len(train_loader.dataset)} samples in {len(train_loader)} batches of size {configs.BATCH_SIZE}")
 print(f"| Validation dataloader: {len(val_loader.dataset)} samples in {len(val_loader)} batches of size {configs.BATCH_SIZE}")
