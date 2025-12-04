@@ -160,7 +160,7 @@ print("Dataloaders created.\n")
 
 ## TRAINING LOOP
 
-best_model_path = "models/20251204-0016/model_88.pth"
+best_model_path = "models/20251204-0532/model_50.pth"
 
 if args.train:
     ## Define loss and optimizer
@@ -172,24 +172,33 @@ if args.train:
     ## Training loop
 
     os.makedirs(configs.MODEL_PATH, exist_ok=True)
+    os.makedirs(configs.OUTPUT_PATH, exist_ok=True)
 
-    train_losses, val_losses = [], []
-    best_val_loss = float("inf")
+    train_losses, train_cers, train_wers = [], [], []
+    val_losses, val_cers, val_wers = [], [], []
+    best_val_cer = float("inf")
 
     for epoch in tqdm(range(1, configs.EPOCHS + 1), desc="Training epochs"):
-        train_loss = train_step(model, train_loader, ctc_loss, optimizer, configs.DEVICE)
-        val_loss = eval_step(model, val_loader, ctc_loss, configs.DEVICE)
+        train_loss, train_cer, train_wer = train_step(model, train_loader, vocab, ctc_loss, optimizer, configs.DEVICE)
+        val_loss, val_cer, val_wer = eval_step(model, val_loader, vocab, ctc_loss, configs.DEVICE)
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+        if val_cer < best_val_cer:
+            best_val_cer = val_cer
             best_model_path = f"{configs.MODEL_PATH}/model_{epoch}.pth"
             torch.save(model.state_dict(), best_model_path)
-            print(f"| New best model saved with val loss {best_val_loss:.4f} at epoch {epoch}")
+            print(f"| New best model saved with val cer {best_val_cer:.4f} at epoch {epoch}")
 
         train_losses.append(train_loss)
-        val_losses.append(val_loss)
+        train_cers.append(train_cer)
+        train_wers.append(train_wer)
 
-        print(f"Epoch {epoch}/{configs.EPOCHS} - Train Loss: {train_loss:.4f} - Val Loss: {val_loss:.4f}")
+        val_losses.append(val_loss)
+        val_cers.append(val_cer)
+        val_wers.append(val_wer)
+
+        print(f"Epoch {epoch}/{configs.EPOCHS}")
+        print(f"| Train Loss: {train_loss:.4f}\t-\tTrain CER: {train_cer:.4f}\t-\tTrain WER: {train_wer:.4f}")
+        print(f"| Val Loss: {val_loss:.4f}\t-\tVal CER: {val_cer:.4f}\t-\tVal WER: {val_wer:.4f}")
 
 ## TODO: Plot losses
 

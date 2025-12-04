@@ -3,6 +3,8 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 
+from inference_model import CER, WER
+
 class CRNN(nn.Module):
     def __init__(self, num_classes, lstm_hidden_size=256, lstm_layers=2):
         super(CRNN, self).__init__()
@@ -50,9 +52,11 @@ class CRNN(nn.Module):
 
         return out.log_softmax(2)  # for CTC loss
 
-def train_step(model, dataloader, criterion, optimizer, device):
+def train_step(model, dataloader, vocab, criterion, optimizer, device):
     model.train()
-    step_loss = 0
+    total_loss = 0
+
+    all_predictions, all_truth = [], []
 
     for images, labels, image_lengths, label_lengths in tqdm(dataloader, desc="| Training", leave=False):
         images = images.to(device)
@@ -66,14 +70,26 @@ def train_step(model, dataloader, criterion, optimizer, device):
         loss.backward()
         optimizer.step()
 
-        step_loss += loss.item()
+        total_loss += loss.item()
+
+        # decode predictions for CER and WER
+        predictions, truth = vocab.decode_batch(outputs, labels, label_lengths)
+
+        all_predictions.extend(predictions)
+        all_truth.extend(truth)
     
-    return step_loss / len(dataloader)
+    avg_loss = total_loss / len(dataloader)
+    cer = CER(all_predictions, all_truth)
+    wer = WER(all_predictions, all_truth)
+    
+    return avg_loss, cer, wer
 
 @torch.no_grad()
-def eval_step(model, dataloader, criterion, device):
+def eval_step(model, dataloader, vocab, criterion, device):
     model.eval()
-    step_loss = 0
+    total_loss = 0
+
+    all_predictions, all_truth = [], []
 
     for images, labels, image_lengths, label_lengths in tqdm(dataloader, desc="| Validating", leave=False):
         images = images.to(device)
@@ -82,6 +98,16 @@ def eval_step(model, dataloader, criterion, device):
         outputs = model(images)
         loss = criterion(outputs, labels, image_lengths, label_lengths)
 
-        step_loss += loss.item()
+        total_loss += loss.item()
+
+        # decode predictions for CER and WER
+        predictions, truth = vocab.decode_batch(outputs, labels, label_lengths)
+
+        all_predictions.extend(predictions)
+        all_truth.extend(truth)
     
-    return step_loss / len(dataloader)
+    avg_loss = total_loss / len(dataloader)
+    cer = CER(all_predictions, all_truth)
+    wer = WER(all_predictions, all_truth)
+    
+    return avg_loss, cer, wer
