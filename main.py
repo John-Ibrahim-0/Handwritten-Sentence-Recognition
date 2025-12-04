@@ -10,8 +10,6 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-import matplotlib.pyplot as plt
-
 from sklearn.model_selection import train_test_split
 
 from dataset import HandwrittenSentenceDataset, collate_fn
@@ -213,8 +211,8 @@ if args.train:
         val_wers.append(val_wer)
 
         print(f"Epoch {epoch}/{configs.EPOCHS}")
-        print(f"| Train Loss: {train_loss:.4f}\t-\tTrain CER: {train_cer:.4f}\t-\tTrain WER: {train_wer:.4f}")
-        print(f"| Val Loss: {val_loss:.4f}\t-\tVal CER: {val_cer:.4f}\t-\tVal WER: {val_wer:.4f}")
+        print(f"| Train Loss: {train_loss:.4f} - Train CER: {train_cer:.4f} - Train WER: {train_wer:.4f}")
+        print(f"| Val Loss: {val_loss:.4f} - Val CER: {val_cer:.4f} - Val WER: {val_wer:.4f}")
 
 ## TODO: Plot epochs
 

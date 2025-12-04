@@ -2,9 +2,6 @@ from tqdm import tqdm
 
 import torch
 
-from model import CRNN
-from configs import Configs
-
 @torch.no_grad()
 def infer(model, dataloader, vocab, device):
     all_predictions, all_truth = [], []
