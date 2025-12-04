@@ -158,7 +158,7 @@ print("Dataloaders created.\n")
 
 ## TRAINING LOOP
 
-best_model_path = "models/20251204-0532/model_50.pth"
+best_model_path = "models/20251204-1453/CER_model_50.pth"
 
 if args.train:
     ## Define loss and optimizer
@@ -214,13 +214,13 @@ if args.train:
         print(f"| Train Loss: {train_loss:.4f} - Train CER: {train_cer:.4f} - Train WER: {train_wer:.4f}")
         print(f"| Val Loss: {val_loss:.4f} - Val CER: {val_cer:.4f} - Val WER: {val_wer:.4f}")
 
-## TODO: Plot epochs
+    ## Plot epochs
 
-x = range(1, configs.EPOCHS + 1)
+    x = range(1, configs.EPOCHS + 1)
 
-show_plot(x, "Epochs", train_losses, "Training Loss", val_losses, "Validation Loss", "Loss", "Training vs. Validation Loss", "losses.png")
-show_plot(x, "Epochs", train_cers, "Training CER", val_cers, "Validation CER", "CER", "Training vs. Validation CER", "CERs.png")
-show_plot(x, "Epochs", train_wers, "Training WER", val_wers, "Validation WER", "WER", "Training vs. Validation WER", "WERs.png")
+    show_plot(x, "Epochs", train_losses, "Training Loss", val_losses, "Validation Loss", "Loss", "Training vs. Validation Loss", "losses.png")
+    show_plot(x, "Epochs", train_cers, "Training CER", val_cers, "Validation CER", "CER", "Training vs. Validation CER", "CERs.png")
+    show_plot(x, "Epochs", train_wers, "Training WER", val_wers, "Validation WER", "WER", "Training vs. Validation WER", "WERs.png")
 
 ## INFERENCE ON TEST SET
 
