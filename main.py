@@ -160,11 +160,14 @@ print("Dataloaders created.\n")
 
 ## TRAINING LOOP
 
+best_model_path = ""
+
 if args.train:
     ## Define loss and optimizer
 
     ctc_loss = nn.CTCLoss(blank=0, zero_infinity=True)
-    optimizer = optim.Adam(model.parameters(), lr=configs.LEARNING_RATE, weight_decay=configs.WEIGHT_DECAY)
+    # optimizer = optim.Adam(model.parameters(), lr=configs.LEARNING_RATE, weight_decay=configs.WEIGHT_DECAY)
+    optimizer = optim.AdamW(model.parameters(), lr=configs.LEARNING_RATE, weight_decay=configs.WEIGHT_DECAY)
 
     ## Training loop
 
@@ -179,7 +182,8 @@ if args.train:
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model.state_dict(), f"{configs.MODEL_PATH}/model_{epoch}.pth")
+            best_model_path = f"{configs.MODEL_PATH}/model_{epoch}.pth"
+            torch.save(model.state_dict(), best_model_path)
             print(f"| New best model saved with val loss {best_val_loss:.4f} at epoch {epoch}")
 
         train_losses.append(train_loss)
@@ -197,7 +201,7 @@ if args.test:
     print("Running inference:")
 
     inference_model = CRNN(num_classes).to(configs.DEVICE)
-    inference_model.load_state_dict(torch.load(f"models/20251204-0016/model_88.pth", map_location=configs.DEVICE))
+    inference_model.load_state_dict(torch.load(best_model_path, map_location=configs.DEVICE))
 
     predictions, truth = infer(inference_model, test_loader, vocab, configs.DEVICE)
 
