@@ -14,7 +14,7 @@ class Configs():
     WEIGHT_DECAY = 1e-4
 
     # model hyperparameters
-    IMG_HEIGHT = 32 # 32
+    IMG_HEIGHT = 40 # 32
 
     # CTC parameters
     BLANK_LABEL = "-"
