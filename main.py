@@ -2,7 +2,8 @@ import os
 from tqdm import tqdm
 from PIL import Image
 
-import torch
+import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -12,6 +13,7 @@ from sklearn.model_selection import train_test_split
 
 from dataset import HandwrittenSentenceDataset, collate_fn
 from configs import Configs
+from model import CRNN
 
 from utils.visualization import show_before_after
 
@@ -123,3 +125,16 @@ print(f"| Training dataloader: {len(train_loader.dataset)} samples in {len(train
 print(f"| Validation dataloader: {len(val_loader.dataset)} samples in {len(val_loader)} batches of size {configs.BATCH_SIZE}")
 print(f"| Test dataloader: {len(test_loader.dataset)} samples in {len(test_loader)} batches of size {configs.BATCH_SIZE}")
 print("Dataloaders created.")
+
+## Create model
+
+num_classes = len(vocab) + 1  # +1 for the blank label
+
+model = CRNN(num_classes)
+
+## Define loss and optimizer
+
+ctc_loss = nn.CTCLoss(blank=0, zero_infinity=True)
+optimizer = optim.Adam(model.parameters(), lr=configs.LEARNING_RATE, weight_decay=configs.weight_decay)
+
+## Training loop

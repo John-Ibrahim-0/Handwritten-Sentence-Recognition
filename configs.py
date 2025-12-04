@@ -6,8 +6,9 @@ class Configs():
 
     # training hyperparameters
     BATCH_SIZE = 32
-    LEARNING_RATE = 0.001
+    LEARNING_RATE = 0.0001
     EPOCHS = 1000
+    WEIGHT_DECAY = 1e-5
 
     # model hyperparameters
     IMG_HEIGHT = 32

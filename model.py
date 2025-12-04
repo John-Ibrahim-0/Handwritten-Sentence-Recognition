@@ -1,8 +1,7 @@
-import torch
 import torch.nn as nn
 
 class CRNN(nn.Module):
-    def __init__(self, image_height, num_classes, lstm_hidden_size=256, lstm_layers=2):
+    def __init__(self, num_classes, lstm_hidden_size=256, lstm_layers=2):
         super(CRNN, self).__init__()
 
         self.cnn = nn.Sequential(
@@ -36,7 +35,7 @@ class CRNN(nn.Module):
     def forward(self, x):
         # x shape: (batch_size, channels, height, width) -> (batch_size, 1, 32, W)
         conv = self.cnn(x)
-        b, c, h, w = conv.size()
+        _, _, h, _ = conv.size()
 
         assert h == 1, "Height must be 1 after CNN"
 
