@@ -20,7 +20,7 @@ def infer(model, dataloader, vocab, device):
 
         for i, seq in enumerate(predicted_indices):
             predicted_text = vocab.decode(seq)
-            true_text = vocab.decode(labels[i])
+            true_text = vocab.decode(labels[i], collapse_repeats=False)
 
             predictions.append(predicted_text)
             truth.append(true_text)

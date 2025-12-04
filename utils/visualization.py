@@ -19,7 +19,7 @@ def show_transformations(raw_image, transformed_image):
     plt.imshow(image, cmap="gray")
     plt.axis("off")
 
-    plt.show(block=False)
+    plt.show()
 
 def show_predictions(images, predictions, labels, n=5):
     for i in range(n):
@@ -29,4 +29,4 @@ def show_predictions(images, predictions, labels, n=5):
         plt.imshow(image.cpu(), cmap="gray")
         plt.title(f"Predicted: {predictions[i]}\nTrue: {labels[i]}")
         plt.axis("off")  
-        plt.show(block=False)
+        plt.show()
