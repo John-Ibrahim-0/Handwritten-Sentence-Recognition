@@ -19,20 +19,18 @@ class Vocab:
         if isinstance(seq, torch.Tensor):
             seq = seq.detach().cpu().tolist()
         
-        if remove_blank:
-            seq = [int(i) for i in seq if int(i) != 0]
-        else:
-            seq = [int(i) for i in seq]
-
-        decoded = []
+        collapsed = []
         prev_index = None
 
         for i in seq:
             if collapse_repeats:
                 if i != prev_index:
-                    decoded.append(self.idx2char[i])
+                    collapsed.append(i)
             else:
-                decoded.append(self.idx2char[i])
+                collapsed.append(i)
             prev_index = i
-        
-        return "".join(decoded)
+
+        if remove_blank:
+            collapsed = [i for i in collapsed if i != 0]
+
+        return "".join(self.idx2char[i] for i in collapsed)
