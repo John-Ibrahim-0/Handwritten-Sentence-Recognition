@@ -1,3 +1,6 @@
+from tqdm import tqdm
+
+import torch
 import torch.nn as nn
 
 class CRNN(nn.Module):
@@ -18,7 +21,7 @@ class CRNN(nn.Module):
             nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
             nn.BatchNorm2d(num_features=256),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=(2, 1), stride=(2, 1)), # only downsample height: 8 -> 4
+            nn.MaxPool2d(kernel_size=(8, 1), stride=(8, 1)), # only downsample height: 8 -> 1
         )
 
         cnn_output_channels = 256
@@ -37,7 +40,7 @@ class CRNN(nn.Module):
         conv = self.cnn(x)
         _, _, h, _ = conv.size()
 
-        assert h == 1, "Height must be 1 after CNN"
+        assert h == 1, f"Height must be 1 after CNN, but got {h}"
 
         conv = conv.squeeze(2)  # (batch_size, channels, width)
         conv = conv.permute(2, 0, 1)  # (width, batch_size, channels)
@@ -46,3 +49,39 @@ class CRNN(nn.Module):
         out = self.fc(lstm_out)  # (width, batch_size, num_classes)
 
         return out.log_softmax(2)  # for CTC loss
+
+def train_step(model, dataloader, criterion, optimizer, device):
+    model.train()
+    step_loss = 0
+
+    for images, labels, image_lengths, label_lengths in tqdm(dataloader, desc="| Training", leave=False):
+        images = images.to(device)
+        labels = labels.to(device)
+
+        optimizer.zero_grad()
+
+        outputs = model(images)
+        loss = criterion(outputs, labels, image_lengths, label_lengths)
+        
+        loss.backward()
+        optimizer.step()
+
+        step_loss += loss.item()
+    
+    return step_loss / len(dataloader)
+
+@torch.no_grad()
+def eval_step(model, dataloader, criterion, device):
+    model.eval()
+    step_loss = 0
+
+    for images, labels, image_lengths, label_lengths in tqdm(dataloader, desc="| Validating", leave=False):
+        images = images.to(device)
+        labels = labels.to(device)
+
+        outputs = model(images)
+        loss = criterion(outputs, labels, image_lengths, label_lengths)
+
+        step_loss += loss.item()
+    
+    return step_loss / len(dataloader)

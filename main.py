@@ -1,7 +1,9 @@
 import os
 from tqdm import tqdm
 from PIL import Image
+from functools import partial
 
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
@@ -13,9 +15,10 @@ from sklearn.model_selection import train_test_split
 
 from dataset import HandwrittenSentenceDataset, collate_fn
 from configs import Configs
-from model import CRNN
+from model import CRNN, train_step, eval_step
 
 from utils.visualization import show_before_after
+from utils.transforms import ResizeHeight
 
 configs = Configs()
 
@@ -67,7 +70,7 @@ print("| Data split.")
 train_transforms = transforms.Compose([
     transforms.Grayscale(num_output_channels=1),
 
-    transforms.Resize(32),
+    ResizeHeight(configs.IMG_HEIGHT),
 
     transforms.RandomApply([
         transforms.RandomAffine(degrees=3, translate=(0.03, 0.03), scale=(0.95, 1.05), shear=3)], p=0.7
@@ -89,19 +92,21 @@ train_transforms = transforms.Compose([
 
 val_test_transforms = transforms.Compose([
     transforms.Grayscale(num_output_channels=1),
-    transforms.Resize(32),
+    ResizeHeight(configs.IMG_HEIGHT),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.5], std=[0.5])
 ])
 
 ## Visualize transforms
 
+''' # uncomment to visualize transforms
 image_path = images_train[0]
 
 raw_image = Image.open(image_path).convert("L")
 transformed_image = train_transforms(raw_image)
 
 show_before_after(raw_image, transformed_image)
+'''
 
 ## Create datasets
 
@@ -113,28 +118,47 @@ test_dataset = HandwrittenSentenceDataset(images_test, labels_test, vocab, val_t
 
 print("| Datasets ceated.")
 
-## Create dataloaders
-
-print("\nCreating dataloaders:")
-
-train_loader = DataLoader(train_dataset, batch_size=configs.BATCH_SIZE, shuffle=True, collate_fn=collate_fn)
-val_loader = DataLoader(val_dataset, batch_size=configs.BATCH_SIZE, shuffle=False, collate_fn=collate_fn)
-test_loader = DataLoader(test_dataset, batch_size=configs.BATCH_SIZE, shuffle=False, collate_fn=collate_fn)
-
-print(f"| Training dataloader: {len(train_loader.dataset)} samples in {len(train_loader)} batches of size {configs.BATCH_SIZE}")
-print(f"| Validation dataloader: {len(val_loader.dataset)} samples in {len(val_loader)} batches of size {configs.BATCH_SIZE}")
-print(f"| Test dataloader: {len(test_loader.dataset)} samples in {len(test_loader)} batches of size {configs.BATCH_SIZE}")
-print("Dataloaders created.")
-
 ## Create model
 
 num_classes = len(vocab) + 1  # +1 for the blank label
 
 model = CRNN(num_classes)
 
+## Create dataloaders
+
+print("\nCreating dataloaders:")
+
+train_loader = DataLoader(train_dataset, batch_size=configs.BATCH_SIZE, shuffle=True, collate_fn=partial(collate_fn, model=model))
+val_loader = DataLoader(val_dataset, batch_size=configs.BATCH_SIZE, shuffle=False, collate_fn=partial(collate_fn, model=model))
+test_loader = DataLoader(test_dataset, batch_size=configs.BATCH_SIZE, shuffle=False, collate_fn=partial(collate_fn, model=model))
+
+print(f"| Training dataloader: {len(train_loader.dataset)} samples in {len(train_loader)} batches of size {configs.BATCH_SIZE}")
+print(f"| Validation dataloader: {len(val_loader.dataset)} samples in {len(val_loader)} batches of size {configs.BATCH_SIZE}")
+print(f"| Test dataloader: {len(test_loader.dataset)} samples in {len(test_loader)} batches of size {configs.BATCH_SIZE}")
+print("Dataloaders created.\n")
+
 ## Define loss and optimizer
 
 ctc_loss = nn.CTCLoss(blank=0, zero_infinity=True)
-optimizer = optim.Adam(model.parameters(), lr=configs.LEARNING_RATE, weight_decay=configs.weight_decay)
+optimizer = optim.Adam(model.parameters(), lr=configs.LEARNING_RATE, weight_decay=configs.WEIGHT_DECAY)
 
 ## Training loop
+
+os.makedirs(configs.MODEL_PATH, exist_ok=True)
+
+train_losses, val_losses = [], []
+best_val_loss = float("inf")
+
+for epoch in tqdm(range(1, configs.EPOCHS + 1), desc="Training epochs"):
+    train_loss = train_step(model, train_loader, ctc_loss, optimizer, configs.DEVICE)
+    val_loss = eval_step(model, val_loader, ctc_loss, configs.DEVICE)
+
+    if val_loss < best_val_loss:
+        best_val_loss = val_loss
+        torch.save(model.state_dict(), f"{configs.MODEL_PATH}/model_{epoch}.pth")
+        print(f"| New best model saved with val loss {best_val_loss:.4f} at epoch {epoch}")
+
+    train_losses.append(train_loss)
+    val_losses.append(val_loss)
+
+    print(f"Epoch {epoch}/{configs.EPOCHS} - Train Loss: {train_loss:.4f} - Val Loss: {val_loss:.4f}")

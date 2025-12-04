@@ -41,7 +41,7 @@ class HandwrittenSentenceDataset(Dataset):
 
         return image, label
 
-def collate_fn(batch):
+def collate_fn(batch, model):
     images, labels = zip(*batch)
 
     # get max width in the batch
@@ -50,16 +50,27 @@ def collate_fn(batch):
     padded_images = []
 
     for image in images:
-        _, h, w = image.shape
+        _, _, w = image.shape
         pad_width = max_width - w
 
         padded = F.pad(image, (0, pad_width, 0, 0), value=0.0)
         padded_images.append(padded)
     
+    # stack images into tensor (B, C, H, W)
     images_tensor = torch.stack(padded_images)
-    labels_tensor = torch.cat(labels)
 
-    image_lengths = torch.tensor([image.shape[2] for image in images], dtype=torch.long)
+    # convert labels to tensors
+    label_tensors = [torch.tensor(label, dtype=torch.long) for label in labels]
+    labels_tensor = torch.cat(label_tensors)
+
+    # length of each label
     label_lengths = torch.tensor([len(label) for label in labels], dtype=torch.long)
+
+    with torch.no_grad():
+        dummy_image = images_tensor[0].unsqueeze(0)  # (1, C, H, W)
+        cnn_out = model.cnn(dummy_image) # pass through CNN only
+        seq_len = cnn_out.size(-1)  # width dimension after CNN
+    
+    image_lengths = torch.tensor([seq_len] * len(images), dtype=torch.long)
 
     return images_tensor, labels_tensor, image_lengths, label_lengths
