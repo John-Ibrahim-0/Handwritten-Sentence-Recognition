@@ -34,3 +34,24 @@ class Vocab:
             collapsed = [i for i in collapsed if i != 0]
 
         return "".join(self.idx2char[i] for i in collapsed)
+
+    def decode_batch(self, logits, labels, label_lengths):
+        predicted_indices = logits.softmax(2).argmax(2)  # (W, B)
+        predicted_indices = predicted_indices.permute(1, 0)  # (B, W)
+
+        predictions, truth = [], []
+
+        cumulative_sums = torch.cumsum(label_lengths, dim=0)
+        start_index = 0
+
+        for i, seq in enumerate(predicted_indices):
+            end_index = cumulative_sums[i]
+            predicted_text = self.decode(seq)
+            true_text = self.decode(labels[start_index:end_index], collapse_repeats=False)
+
+            predictions.append(predicted_text)
+            truth.append(true_text)
+
+            start_index = end_index
+        
+        return predictions, truth

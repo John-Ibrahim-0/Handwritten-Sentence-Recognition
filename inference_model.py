@@ -7,7 +7,7 @@ from configs import Configs
 
 @torch.no_grad()
 def infer(model, dataloader, vocab, device):
-    predictions, truth = [], []
+    all_predictions, all_truth = [], []
     model.eval()
 
     for images, labels, _, label_lengths in tqdm(dataloader, desc="| Inferring"):
@@ -15,23 +15,12 @@ def infer(model, dataloader, vocab, device):
 
         outputs = model(images) # (W, B, C)
 
-        predicted_indices = outputs.softmax(2).argmax(2)  # (W, B)
-        predicted_indices = predicted_indices.permute(1, 0)  # (B, W)
+        batch_predictions, batch_truth = vocab.decode_batch(outputs, labels, label_lengths)
 
-        cumulative_sums = torch.cumsum(label_lengths, dim=0)
-        start_index = 0
-
-        for i, seq in enumerate(predicted_indices):
-            end_index = cumulative_sums[i]
-            predicted_text = vocab.decode(seq)
-            true_text = vocab.decode(labels[start_index:end_index], collapse_repeats=False)
-
-            predictions.append(predicted_text)
-            truth.append(true_text)
-
-            start_index = end_index
+        all_predictions.extend(batch_predictions)
+        all_truth.extend(batch_truth)
     
-    return predictions, truth
+    return all_predictions, all_truth
 
 def CER(predictions, truth):
     correct_chars = 0
