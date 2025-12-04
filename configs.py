@@ -10,7 +10,7 @@ class Configs():
     # training hyperparameters
     BATCH_SIZE = 32 # 16
     LEARNING_RATE = 3e-4 # 1e-4
-    EPOCHS = 2
+    EPOCHS = 50
     WEIGHT_DECAY = 1e-4
 
     # model hyperparameters
