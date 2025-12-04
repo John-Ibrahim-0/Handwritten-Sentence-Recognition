@@ -19,7 +19,7 @@ from configs import Configs
 from model import CRNN, train_step, eval_step
 from inference_model import infer, CER, WER
 
-from utils.visualization import show_before_after
+from utils.visualization import show_transformations
 from utils.transforms import ResizeHeight
 from utils.vocab import Vocab
 
@@ -29,8 +29,14 @@ parser = argparse.ArgumentParser(description="Handwritten Sentence Recognition")
 
 parser.add_argument("--train", action="store_true", help="Run training loop")
 parser.add_argument("--test", action="store_true", help="Run inference on test set")
+parser.add_argument("--show-transforms", action="store_true", help="Visualize transformations before and after")
+parser.add_argument("--show-predictions", action="store_true", help="Visualize model predictions")
 
 args = parser.parse_args()
+
+# enforce dependencies
+if args.show_predictions and not args.test:
+    raise ValueError("--show-predictions requires --test to be specified.")
 
 ## Setup configs
 
@@ -113,16 +119,15 @@ val_test_transforms = transforms.Compose([
     transforms.Normalize(mean=[0.5], std=[0.5])
 ])
 
-## Visualize transforms
+if args.show_transforms:
+    ## Visualize transforms
 
-''' # uncomment to visualize transforms
-image_path = images_train[0]
+    image_path = images_train[0]
 
-raw_image = Image.open(image_path).convert("L")
-transformed_image = train_transforms(raw_image)
+    raw_image = Image.open(image_path).convert("L")
+    transformed_image = train_transforms(raw_image)
 
-show_before_after(raw_image, transformed_image)
-'''
+    show_transformations(raw_image, transformed_image)
 
 ## Create datasets
 
@@ -209,3 +214,6 @@ if args.test:
     print("| Word accuracy:", wer_score)
 
     ## TODO: Visualize predictions
+
+    if args.show_predictions:
+        pass
