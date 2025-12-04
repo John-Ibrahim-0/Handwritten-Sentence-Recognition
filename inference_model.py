@@ -10,7 +10,7 @@ def infer(model, dataloader, vocab, device):
     predictions, truth = [], []
     model.eval()
 
-    for images, labels, _, _ in tqdm(dataloader, desc="| Inferring"):
+    for images, labels, _, label_lengths in tqdm(dataloader, desc="| Inferring"):
         images = images.to(device)
 
         outputs = model(images) # (W, B, C)
@@ -18,12 +18,18 @@ def infer(model, dataloader, vocab, device):
         predicted_indices = outputs.softmax(2).argmax(2)  # (W, B)
         predicted_indices = predicted_indices.permute(1, 0)  # (B, W)
 
+        cumulative_sums = torch.cumsum(label_lengths, dim=0)
+        start_index = 0
+
         for i, seq in enumerate(predicted_indices):
+            end_index = cumulative_sums[i]
             predicted_text = vocab.decode(seq)
-            true_text = vocab.decode(labels[i], collapse_repeats=False)
+            true_text = vocab.decode(labels[start_index:end_index], collapse_repeats=False)
 
             predictions.append(predicted_text)
             truth.append(true_text)
+
+            start_index = end_index
     
     return predictions, truth
 

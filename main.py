@@ -160,7 +160,7 @@ print("Dataloaders created.\n")
 
 ## TRAINING LOOP
 
-best_model_path = ""
+best_model_path = "models/20251204-0016/model_88.pth"
 
 if args.train:
     ## Define loss and optimizer
@@ -217,7 +217,7 @@ if args.test:
     print("| Character accuracy:", cer_score)
     print("| Word accuracy:", wer_score)
 
-    ## TODO: Visualize predictions
+    ## Visualize predictions
 
     if args.show_predictions:
         images_batch, _, _, _ = next(iter(test_loader))

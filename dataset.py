@@ -43,14 +43,14 @@ def collate_fn(batch, model):
         pad_left = pad_width // 2
         pad_right = pad_width - pad_left
 
-        padded = F.pad(image, (0, pad_width, 0, 0), value=0.0)
+        padded = F.pad(image, (pad_left, pad_right, 0, 0), value=0.0)
         padded_images.append(padded)
     
     # stack images into tensor (B, C, H, W)
     images_tensor = torch.stack(padded_images)
 
     # convert labels to tensors
-    label_tensors = [torch.tensor(label, dtype=torch.long) for label in labels]
+    label_tensors = torch.cat([torch.tensor(label, dtype=torch.long) for label in labels])
 
     # length of each label
     label_lengths = torch.tensor([len(label) for label in labels], dtype=torch.long)
