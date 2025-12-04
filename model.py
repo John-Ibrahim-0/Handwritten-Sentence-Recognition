@@ -23,7 +23,7 @@ class CRNN(nn.Module):
             nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
             nn.BatchNorm2d(num_features=256),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=(8, 1), stride=(8, 1)), # only downsample height: 8 -> 1
+            nn.MaxPool2d(kernel_size=(10, 1), stride=(10, 1)), # only downsample height: 8 -> 1
         )
 
         cnn_output_channels = 256
