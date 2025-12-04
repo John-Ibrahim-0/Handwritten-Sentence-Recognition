@@ -21,5 +21,6 @@ class Configs():
 
     # paths
     MODEL_PATH = os.path.join("models", datetime.strftime(datetime.now(), "%Y%m%d-%H%M"))
+    OUTPUT_PATH = os.path.join("outputs", datetime.strftime(datetime.now(), "%Y%m%d-%H%M"))
     DATA_FOLDER = "data/sentences"
     LABEL_FILE = "data/ascii/sentences.txt"

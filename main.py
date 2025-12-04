@@ -19,7 +19,7 @@ from configs import Configs
 from model import CRNN, train_step, eval_step
 from inference_model import infer, CER, WER
 
-from utils.visualization import show_transformations, show_predictions
+from utils.visualization import show_transformations, show_predictions, show_plot
 from utils.transforms import ResizeHeight
 from utils.vocab import Vocab
 
@@ -176,17 +176,33 @@ if args.train:
 
     train_losses, train_cers, train_wers = [], [], []
     val_losses, val_cers, val_wers = [], [], []
-    best_val_cer = float("inf")
+    
+    best_val_loss, best_val_cer, best_val_wer = float("inf"), float("inf"), float("inf")
 
     for epoch in tqdm(range(1, configs.EPOCHS + 1), desc="Training epochs"):
         train_loss, train_cer, train_wer = train_step(model, train_loader, vocab, ctc_loss, optimizer, configs.DEVICE)
         val_loss, val_cer, val_wer = eval_step(model, val_loader, vocab, ctc_loss, configs.DEVICE)
 
+        # check for best val loss model
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_model_path = f"{configs.MODEL_PATH}/loss_model_{epoch}.pth"
+            torch.save(model.state_dict(), best_model_path)
+            print(f"| New best model saved with val loss {best_val_loss:.4f} at epoch {epoch}")
+        
+        # check for best val CER model
         if val_cer < best_val_cer:
             best_val_cer = val_cer
-            best_model_path = f"{configs.MODEL_PATH}/model_{epoch}.pth"
+            best_model_path = f"{configs.MODEL_PATH}/CER_model_{epoch}.pth"
             torch.save(model.state_dict(), best_model_path)
-            print(f"| New best model saved with val cer {best_val_cer:.4f} at epoch {epoch}")
+            print(f"| New best model saved with val CER {best_val_cer:.4f} at epoch {epoch}")
+        
+        # check for best val WER model
+        if val_wer < best_val_wer:
+            best_val_wer = val_wer
+            best_model_path = f"{configs.MODEL_PATH}/WER_model_{epoch}.pth"
+            torch.save(model.state_dict(), best_model_path)
+            print(f"| New best model saved with val WER {best_val_wer:.4f} at epoch {epoch}")
 
         train_losses.append(train_loss)
         train_cers.append(train_cer)
@@ -200,7 +216,13 @@ if args.train:
         print(f"| Train Loss: {train_loss:.4f}\t-\tTrain CER: {train_cer:.4f}\t-\tTrain WER: {train_wer:.4f}")
         print(f"| Val Loss: {val_loss:.4f}\t-\tVal CER: {val_cer:.4f}\t-\tVal WER: {val_wer:.4f}")
 
-## TODO: Plot losses
+## TODO: Plot epochs
+
+x = range(1, configs.EPOCHS + 1)
+
+show_plot(x, "Epochs", train_losses, "Training Loss", val_losses, "Validation Loss", "Loss", "Training vs. Validation Loss", "losses.png")
+show_plot(x, "Epochs", train_cers, "Training CER", val_cers, "Validation CER", "CER", "Training vs. Validation CER", "CERs.png")
+show_plot(x, "Epochs", train_wers, "Training WER", val_wers, "Validation WER", "WER", "Training vs. Validation WER", "WERs.png")
 
 ## INFERENCE ON TEST SET
 

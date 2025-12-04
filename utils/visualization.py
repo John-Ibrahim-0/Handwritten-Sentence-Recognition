@@ -1,5 +1,9 @@
 import matplotlib.pyplot as plt
 
+from configs import Configs
+
+configs = Configs()
+
 def unnormalize(tensor):
     return tensor * 0.5 + 0.5
 
@@ -30,3 +34,19 @@ def show_predictions(images, predictions, labels, n=5):
         plt.title(f"Predicted: {predictions[i]}\nTrue: {labels[i]}")
         plt.axis("off")  
         plt.show()
+
+def show_plot(x, xlabel, y1, ylabel1, y2, ylabel2, ylabel, title, filename):
+    plt.figure(figsize=(12, 5))
+
+    plt.plot(x, y1, label=ylabel1, marker="o")
+    plt.plot(x, y2, label=ylabel2, marker="o")
+
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    plt.legend()
+    plt.grid(True)
+
+    plt.savefig(f"{configs.OUTPUT_PATH}/{filename}")
+    
